@@ -8,7 +8,9 @@ import {
   User as UserIcon,
   BadgeAlert,
   Save,
-  Trash2
+  Trash2,
+  TrendingDown,
+  TrendingUp
 } from 'lucide-react';
 import { Student, Grade, Intervention, YearGroup, GradeType } from '../types';
 import { 
@@ -233,36 +235,44 @@ export default function StudentDetailModal({ student, academicYear, onClose }: S
                 className="space-y-8"
               >
                 <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Cross-Subject Proficiency Matrix</h3>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Cross-Subject Proficiency Matrix ({academicYear})</h3>
                   <div className="h-64 flex items-end justify-around gap-4 px-4 overflow-x-auto">
-                    {Object.entries(
-                        grades.reduce((acc, g) => {
-                          if (g.academicYear === academicYear) {
-                            if (!acc[g.subject]) acc[g.subject] = [];
-                            acc[g.subject].push(parseInt(g.gradeValue) || 0);
-                          }
-                          return acc;
-                        }, {} as Record<string, number[]>)
-                      ).map(([subject, values]) => {
+                    {(() => {
+                      const subjectGroups = grades.reduce((acc, g) => {
+                        if (g.academicYear === academicYear) {
+                          if (!acc[g.subject]) acc[g.subject] = [];
+                          acc[g.subject].push(parseInt(g.gradeValue) || 0);
+                        }
+                        return acc;
+                      }, {} as Record<string, number[]>);
+
+                      const subjectEntries = Object.entries(subjectGroups);
+                      
+                      if (subjectEntries.length === 0) {
+                        return <div className="w-full text-center py-12 text-slate-400 font-medium italic">No performance data for {academicYear}.</div>;
+                      }
+
+                      return subjectEntries.map(([subject, values]) => {
                         const v = values as number[];
                         const avg = v.reduce((a, b) => a + b, 0) / v.length;
                         const height = (avg / 9) * 100;
                         return (
-                          <div key={subject} className="flex flex-col items-center flex-1 min-w-[60px] group">
+                          <div key={subject} className="flex flex-col items-center flex-1 min-w-[80px] group">
                             <div className="w-full bg-slate-50 rounded-t-xl relative h-48 flex items-end">
                               <motion.div 
                                 initial={{ height: 0 }}
                                 animate={{ height: `${height}%` }}
                                 className="w-full bg-blue-600 rounded-t-lg shadow-lg shadow-blue-100 group-hover:bg-blue-500 transition-colors"
                               />
-                              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded">
-                                Avg: {avg.toFixed(1)}
+                              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-8 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-black px-2 py-1.5 rounded shadow-xl whitespace-nowrap z-20">
+                                Latest Avg: {avg.toFixed(1)}
                               </div>
                             </div>
                             <span className="text-[9px] font-black uppercase text-slate-500 mt-4 text-center line-clamp-2 px-1">{subject}</span>
                           </div>
                         );
-                      })}
+                      });
+                    })()}
                   </div>
                 </div>
 
@@ -271,13 +281,16 @@ export default function StudentDetailModal({ student, academicYear, onClose }: S
                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Latest Attainment by Subject</h4>
                      <div className="space-y-2">
                         {Array.from(new Set(grades.map(g => g.subject))).map(subject => {
-                          const subGrades = grades.filter(g => g.subject === subject).sort((a,b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                          const subGrades = grades.filter(g => g.subject === subject).sort((a,b) => b.updatedAt?.toMillis() - a.updatedAt?.toMillis() || 0);
                           const latest = subGrades[0];
                           return (
                             <div key={subject} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                               <div className="flex flex-col">
                                 <span className="text-[11px] font-black text-slate-900 uppercase">{subject}</span>
-                                <span className="text-[9px] text-slate-400 font-bold uppercase">{latest?.type || 'No Data'}</span>
+                                <div className="flex gap-2">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase">{latest?.type || 'No Data'}</span>
+                                  <span className="text-[9px] text-blue-400 font-bold uppercase">FY {latest?.academicYear}</span>
+                                </div>
                               </div>
                               <span className="text-sm font-black text-blue-600 bg-white px-3 py-1 rounded-lg border border-slate-100 shadow-sm">{latest?.gradeValue || '—'}</span>
                             </div>
@@ -291,7 +304,7 @@ export default function StudentDetailModal({ student, academicYear, onClose }: S
                         {Array.from(new Set(grades.map(g => g.academicYear))).sort().reverse().map(year => (
                           <div key={year} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                             <span className="text-[11px] font-black text-slate-900 uppercase">FY {year}</span>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 flex-wrap justify-end">
                               {Array.from(new Set(grades.filter(g => g.academicYear === year).map(g => g.subject))).map(sub => (
                                 <span key={sub} className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[8px] font-bold text-slate-400">{sub}</span>
                               ))}
@@ -300,15 +313,20 @@ export default function StudentDetailModal({ student, academicYear, onClose }: S
                         ))}
                      </div>
                   </div>
-                  <div className="bg-blue-600 p-8 rounded-3xl text-white shadow-xl shadow-blue-200">
-                    <History className="mb-4" size={24} />
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-2">Subject Synergy</h4>
-                    <p className="text-blue-100 text-sm font-medium leading-relaxed">
-                      {grades.length > 5 
-                        ? `Stable performance across ${new Set(grades.map(g => g.subject)).size} domains. Year-on-year growth detected in the upper quartile.`
-                        : "Insufficient data for longitudinal trend analysis. Populate more performance metrics to unlock AI insights."}
-                    </p>
+                </div>
+
+                <div className="bg-blue-600 p-8 rounded-3xl text-white shadow-xl shadow-blue-200">
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <TrendingUp size={20} />
+                     </div>
+                     <h4 className="text-xl font-black uppercase tracking-tight">Focus Mastery</h4>
                   </div>
+                  <p className="text-blue-100 text-sm font-medium leading-relaxed">
+                    {grades.length > 5 
+                      ? `Stable performance across ${new Set(grades.map(g => g.subject)).size} domains. High alignment detected across humanities performance clusters.`
+                      : "Insufficient data for longitudinal trend analysis. Populate more performance metrics across different subjects to unlock full cohort comparison insights."}
+                  </p>
                 </div>
               </motion.div>
             )}

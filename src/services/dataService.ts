@@ -9,9 +9,10 @@ import {
   serverTimestamp,
   orderBy,
   setDoc,
+  getDoc,
+  getDocs,
   deleteDoc,
-  writeBatch,
-  getDocs
+  writeBatch
 } from 'firebase/firestore';
 import { db, handleFirestoreError, auth } from '../firebase';
 import { Student, Grade, Intervention, YearGroup, GradeType } from '../types';
@@ -214,23 +215,28 @@ export function subscribeToDepartments(callback: (depts: any[]) => void) {
 }
 export async function ensureBaseDepartments() {
   try {
-    const q = collection(db, 'departments');
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      const subjectDefinitions = [
-        { name: 'History', years: ['9', '10', '11', '12', '13'], icon: '📜' },
-        { name: 'Geography', years: ['9', '10', '11', '12', '13'], icon: '🌍' },
-        { name: 'Psychology', years: ['10', '11', '12', '13'], icon: '🧠' },
-        { name: 'Philosophy', years: ['12', '13'], icon: '⚖️' },
-        { name: 'Sociology', years: ['10', '11'], icon: '👥' },
-        { name: 'Social Studies', years: ['7', '8'], icon: '🤝' },
-      ];
-      for (const s of subjectDefinitions) {
-        await addDepartment({
+    const subjectDefinitions = [
+      { name: 'History', years: ['9', '10', '11', '12', '13'], icon: '📜' },
+      { name: 'Geography', years: ['9', '10', '11', '12', '13'], icon: '🌍' },
+      { name: 'Psychology', years: ['10', '11', '12', '13'], icon: '🧠' },
+      { name: 'Sociology', years: ['10', '11'], icon: '👥' },
+      { name: 'Philosophy', years: ['12', '13'], icon: '⚖️' },
+      { name: 'Social Studies', years: ['7', '8'], icon: '🤝' },
+    ];
+
+    for (const s of subjectDefinitions) {
+      const id = s.name.toLowerCase().replace(/ /g, '-');
+      const deptRef = doc(db, 'departments', id);
+      const snap = await getDoc(deptRef);
+      
+      if (!snap.exists()) {
+        await setDoc(deptRef, {
+          id,
           name: s.name,
           icon: s.icon,
           color: 'bg-blue-600',
-          years: s.years
+          years: s.years,
+          updatedAt: serverTimestamp()
         });
       }
     }
