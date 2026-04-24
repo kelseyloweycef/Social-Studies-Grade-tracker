@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "Department": {
+      "title": "Department",
+      "description": "Definition of an academic department or subject area",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "color": { "type": "string" },
+        "years": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "icon", "color", "years"]
+    },
+    "student": {
+      "title": "Student",
+      "description": "Student profile and core information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "yearGroup": { "type": "string", "enum": ["7", "8", "9", "10", "11", "12", "13"] },
+        "classGroup": { "type": "string" },
+        "enrolledSubjects": { "type": "array", "items": { "type": "string" } },
+        "isSEN": { "type": "boolean" },
+        "cefrLevel": { "type": "string", "enum": ["A1", "A2", "B1", "B2", "C1", "C2"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "yearGroup"]
+    },
+    "grade": {
+      "title": "Grade",
+      "description": "Individual grade entry for a student in a specific subject",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "subject": { "type": "string" },
+        "academicYear": { "type": "string" },
+        "type": { 
+          "type": "string", 
+          "enum": ["End of Year 10", "End of Year 12", "P1", "P2", "P3", "P4", "Aspirational"] 
+        },
+        "gradeValue": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["studentId", "subject", "academicYear", "type", "gradeValue"]
+    },
+    "intervention": {
+      "title": "Intervention",
+      "description": "Staff comments, concerns, support, or interventions for a student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "category": { "type": "string", "enum": ["Concern", "Support", "Intervention", "General"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "category", "content"]
+    }
+  },
+  "firestore": {
+    "/departments/{deptId}": {
+      "schema": "Department",
+      "description": "Academic departments/subjects"
+    },
+    "/students/{studentId}": {
+      "schema": "student",
+      "description": "Root collection for student information"
+    },
+    "/students/{studentId}/grades/{gradeId}": {
+      "schema": "grade",
+      "description": "Grades for a specific student"
+    },
+    "/students/{studentId}/interventions/{interventionId}": {
+      "schema": "intervention",
+      "description": "Interventions/Comments for a specific student"
+    },
+    "/globalGrades/{gradeId}": {
+       "schema": "grade",
+       "description": "Denormalized grades for easy cross-student comparison by subject"
+    }
+  }
+}

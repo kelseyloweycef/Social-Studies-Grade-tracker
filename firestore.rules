@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public Access (as per user request: "staff do not need to sign in")
+    // NOTE: In a real production app, you would at least use IP restrictions or a shared department key.
+    
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // Global Helpers
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+
+); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Student Validation
+    function isValidStudent(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.yearGroup in ['7', '8', '9', '10', '11', '12', '13'];
+    }
+
+    // Grade Validation
+    function isValidGrade(data) {
+      return data.studentId is string && isValidId(data.studentId) &&
+             data.subject is string && data.subject.size() > 0 &&
+             data.type in ['End of Year 10', 'End of Year 12', 'P1', 'P2', 'P3', 'P4', 'Aspirational'] &&
+             data.gradeValue is string;
+    }
+
+    // Intervention Validation
+    function isValidIntervention(data) {
+      return data.studentId is string && isValidId(data.studentId) &&
+             data.category in ['Concern', 'Support', 'Intervention', 'General'] &&
+             data.content is string && data.content.size() > 0;
+    }
+
+    match /students/{studentId} {
+      allow read: if true;
+      allow create: if isValidStudent(incoming()) && isValidId(studentId);
+      allow update: if isValidStudent(incoming());
+    }
+
+    match /students/{studentId}/grades/{gradeId} {
+      allow read: if true;
+      allow write: if isValidGrade(incoming()) && isValidId(gradeId);
+    }
+
+    match /students/{studentId}/interventions/{interventionId} {
+      allow read: if true;
+      allow create: if isValidIntervention(incoming()) && isValidId(interventionId);
+      allow delete: if true;
+    }
+
+    match /globalGrades/{gradeId} {
+      allow read: if true;
+      allow write: if isValidGrade(incoming()) && isValidId(gradeId);
+    }
+  }
+}
