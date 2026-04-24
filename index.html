@@ -1,13 +1,195 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { color: #2563eb; border-bottom: 2px solid #2563eb; background: rgba(37, 99, 235, 0.05); }
+        .hidden-tab { display: none; }
+    </style>
+</head>
+<body class="bg-slate-900/60 flex items-center justify-center min-h-screen p-4">
 
+    <div id="studentModal" class="bg-white rounded-[2rem] w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        
+        <div class="p-8 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+            <div class="flex items-center gap-5">
+                <div id="studentInitial" class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-200">
+                    S
+                </div>
+                <div>
+                    <h2 id="studentName" class="text-3xl font-black text-slate-900 tracking-tight">Student Name</h2>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span id="yearBadge" class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-black uppercase tracking-widest">Year Group</span>
+                        <span id="senBadge" class="hidden px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md text-[10px] font-black uppercase tracking-widest border border-amber-100">SEN / Support</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="p-3 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-900">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+
+        <div class="flex px-8 border-b border-slate-100 bg-white shrink-0">
+            <button onclick="switchTab('grades')" id="tab-grades" class="tab-btn tab-active px-6 py-5 text-[10px] font-black uppercase tracking-widest transition-all">Academic Performance</button>
+            <button onclick="switchTab('interventions')" id="tab-interventions" class="tab-btn px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Staff Observations</button>
+            <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Student Profile</button>
+        </div>
+
+        <div class="flex-1 overflow-auto p-8 bg-slate-50/30">
+            
+            <div id="content-grades" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8" id="gradesList">
+                    </div>
+                
+                <div class="space-y-6">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-plus text-blue-600"></i> Add Entry
+                    </h3>
+                    <form id="gradeForm" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                        <select name="subject" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Psychology">Psychology</option>
+                        </select>
+                        <select name="type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium">
+                            <option value="Aspirational">Aspirational</option>
+                            <option value="P1">P1 Mock</option>
+                            <option value="P2">P2 Mock</option>
+                            <option value="Final">Final</option>
+                        </select>
+                        <input name="grade" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black" placeholder="Grade (e.g. 7 or A*)">
+                        <button type="submit" class="w-full bg-blue-600 text-white rounded-xl py-3 font-black text-sm shadow-lg shadow-blue-100">
+                            Sync Record
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="content-profile" class="tab-content hidden-tab max-w-3xl">
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                    <form id="profileForm" class="space-y-10">
+                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-y-10 gap-x-8">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Legal Identity</label>
+                                <input type="text" id="inputName" class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-sm font-black">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Cohort</label>
+                                <select id="inputYear" class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-sm font-black">
+                                    <option value="11">Year 11</option>
+                                    <option value="13">Year 13</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="pt-8 border-t border-slate-100 flex justify-end">
+                            <button type="submit" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest">
+                                Synchronize Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Mock State Management
+        const state = {
+            student: {
+                name: "Alex Thompson",
+                yearGroup: "13",
+                isSEN: true,
+                grades: [
+                    { id: 1, subject: "History", type: "P1 Mock", value: "6", date: "12 Mar 2026" },
+                    { id: 2, subject: "History", type: "P2 Mock", value: "7", date: "15 Apr 2026" }
+                ]
+            }
+        };
+
+        // UI Initialization
+        function init() {
+            document.getElementById('studentName').innerText = state.student.name;
+            document.getElementById('studentInitial').innerText = state.student.name.charAt(0);
+            document.getElementById('yearBadge').innerText = `Year ${state.student.yearGroup}`;
+            if(state.student.isSEN) document.getElementById('senBadge').classList.remove('hidden');
+            renderGrades();
+        }
+
+        function switchTab(tabId) {
+            // Update Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active', 'text-blue-600');
+                btn.classList.add('text-slate-400');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('tab-active');
+            
+            // Update Content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden-tab');
+            });
+            document.getElementById(`content-${tabId}`).classList.remove('hidden-tab');
+        }
+
+        function renderGrades() {
+            const container = document.getElementById('gradesList');
+            container.innerHTML = '';
+            
+            // Grouping by subject (simplified)
+            const subjects = [...new Set(state.student.grades.map(g => g.subject))];
+            
+            subjects.forEach(subject => {
+                const subGrades = state.student.grades.filter(g => g.subject === subject);
+                const section = `
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="bg-slate-50 px-6 py-3 border-b border-slate-100">
+                            <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-widest">${subject}</h4>
+                        </div>
+                        <table class="w-full text-left">
+                            <tbody class="divide-y divide-slate-50">
+                                ${subGrades.map(g => `
+                                    <tr class="text-[11px]">
+                                        <td class="px-6 py-4 font-bold text-slate-600 uppercase">${g.type}</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-md font-black">${g.value}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-slate-400">${g.date}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.innerHTML += section;
+            });
+        }
+
+        // Form Handling
+        document.getElementById('gradeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            state.student.grades.push({
+                id: Date.now(),
+                subject: formData.get('subject'),
+                type: formData.get('type'),
+                value: formData.get('grade'),
+                date: "Today"
+            });
+            renderGrades();
+            e.target.reset();
+        });
+
+        function closeModal() {
+            alert("Modal closing logic would trigger here (redirect or DOM removal).");
+        }
+
+        init();
+    </script>
+</body>
+</html>
